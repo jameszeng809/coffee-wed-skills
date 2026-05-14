@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bean Journey Coffee — 每一杯，都是一段旅程</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      colors: {
+        brand: { DEFAULT: '#6B4226', dark: '#4A2E1A', light: '#8B5A3C' },
+        accent: { DEFAULT: '#D4A96A', dark: '#B8884A', light: '#E8C48A' }
+      },
+      fontFamily: {
+        sans: ['Noto Sans SC', 'sans-serif'],
+        serif: ['Playfair Display', 'serif']
+      }
+    }
+  }
+}
+</script>
+<style>
+* { box-sizing: border-box; }
+.cart-drawer { transform: translateX(100%); transition: transform 0.3s ease; }
+.cart-drawer.open { transform: translateX(0); }
+.modal-overlay { display: none; }
+.modal-overlay.open { display: flex; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+.product-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(107,66,38,0.15); }
+.product-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+</style>
+</head>
+<body class="font-sans bg-stone-50 text-stone-800">
+
+<!-- 导航栏 -->
+<nav class="bg-brand text-white sticky top-0 z-40 shadow-md">
+  <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 bg-accent rounded-full flex items-center justify-center">
+        <svg class="w-5 h-5 text-brand" fill="currentColor" viewBox="0 0 24 24"><path d="M2 21h18v-2H2v2zm14-9c0 2.21-1.79 4-4 4s-4-1.79-4-4V3h8v9zM6 5v7c0 1.1.9 2 2 2s2-.9 2-2V5H6zm6 0v7c0 1.1.9 2 2 2s2-.9 2-2V5h-4zm4-3H8C7.45 2 7 2.45 7 3v1h10V3c0-.55-.45-1-1-1z"/></svg>
+      </div>
+      <span class="font-serif text-xl font-bold">Bean Journey</span>
+    </div>
+    <div class="hidden md:flex items-center gap-8 text-sm">
+      <a href="#products" class="hover:text-accent transition-colors">产品</a>
+      <a href="#story" class="hover:text-accent transition-colors">品牌故事</a>
+      <a href="#contact" class="hover:text-accent transition-colors">联系我们</a>
+    </div>
+    <div class="flex items-center gap-4">
+      <button onclick="toggleCart()" class="relative p-2 hover:text-accent transition-colors">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+        <span id="cart-badge" class="absolute -top-1 -right-1 bg-accent text-brand text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center hidden">0</span>
+      </button>
+      <div id="auth-area">
+        <button onclick="openAuth()" class="bg-accent text-brand px-4 py-1.5 rounded-full text-sm font-medium hover:bg-accent-dark transition-colors">登录</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero Banner -->
+<section class="relative bg-brand min-h-[520px] flex items-center overflow-hidden">
+  <div class="absolute inset-0 opacity-10">
+    <div class="absolute inset-0" style="background-image: repeating-linear-gradient(45deg, #fff 0, #fff 1px, transparent 0, transparent 50%); background-size: 20px 20px;"></div>
+  </div>
+  <div class="relative max-w-6xl mx-auto px-4 py-20 text-white">
+    <p class="text-accent text-sm font-medium tracking-widest uppercase mb-4">可持续 · 公平贸易</p>
+    <h1 class="font-serif text-5xl md:text-7xl font-bold mb-6 leading-tight">Bean Journey<br><span class="text-accent">Coffee</span></h1>
+    <p class="text-xl text-stone-300 mb-8 max-w-lg">每一杯，都是一段旅程。<br>从埃塞俄比亚的农场到你的杯中，我们追踪每一粒咖啡豆的故事。</p>
+    <div class="flex flex-wrap gap-4">
+      <a href="#products" class="bg-accent text-brand px-8 py-3 rounded-full font-medium hover:bg-accent-dark transition-colors">立即选购</a>
+      <a href="#story" class="border border-white text-white px-8 py-3 rounded-full font-medium hover:bg-white hover:text-brand transition-colors">了解故事</a>
+    </div>
+    <div class="flex gap-8 mt-12 text-sm text-stone-300">
+      <div><span class="text-accent text-2xl font-bold block">12+</span>产地直采</div>
+      <div><span class="text-accent text-2xl font-bold block">50k+</span>满意用户</div>
+      <div><span class="text-accent text-2xl font-bold block">100%</span>公平贸易认证</div>
+    </div>
+  </div>
+</section>
+
+<!-- 产品列表 -->
+<section id="products" class="max-w-6xl mx-auto px-4 py-16">
+  <div class="text-center mb-12">
+    <p class="text-accent text-sm font-medium tracking-widest uppercase mb-2">精选系列</p>
+    <h2 class="font-serif text-3xl font-bold text-brand">探索我们的咖啡</h2>
+  </div>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="product-grid"></div>
+</section>
+
+<!-- 品牌故事 -->
+<section id="story" class="bg-brand/5 py-16">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="grid md:grid-cols-2 gap-12 items-center">
+      <div>
+        <p class="text-accent text-sm font-medium tracking-widest uppercase mb-4">我们的承诺</p>
+        <h2 class="font-serif text-3xl font-bold text-brand mb-6">公平贸易，从一粒豆子开始</h2>
+        <p class="text-stone-600 leading-relaxed mb-4">Bean Journey 与全球12个咖啡产地的小农直接合作，确保每一位种植者获得公平的报酬。我们的每款咖啡都可以追溯到具体的农场和批次。</p>
+        <p class="text-stone-600 leading-relaxed mb-6">我们相信，一杯好咖啡不只关乎口感，更关乎背后每一个人的生活。可持续农业、环保包装、碳中和物流——这是我们对地球的承诺。</p>
+        <div class="flex flex-wrap gap-3">
+          <span class="bg-brand/10 text-brand px-3 py-1 rounded-full text-sm">公平贸易认证</span>
+          <span class="bg-brand/10 text-brand px-3 py-1 rounded-full text-sm">有机种植</span>
+          <span class="bg-brand/10 text-brand px-3 py-1 rounded-full text-sm">碳中和配送</span>
+          <span class="bg-brand/10 text-brand px-3 py-1 rounded-full text-sm">可降解包装</span>
+        </div>
+      </div>
+      <div class="bg-brand/10 rounded-2xl p-8 text-center">
+        <div class="text-6xl mb-4">☕</div>
+        <blockquote class="font-serif text-xl text-brand italic">"好咖啡应该让每个人都受益——从种植者到消费者。"</blockquote>
+        <p class="text-stone-500 mt-4 text-sm">— Bean Journey 创始人</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 页脚 -->
+<footer id="contact" class="bg-brand text-white py-12">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="grid md:grid-cols-3 gap-8 mb-8">
+      <div>
+        <h3 class="font-serif text-lg font-bold mb-4">Bean Journey Coffee</h3>
+        <p class="text-stone-300 text-sm leading-relaxed">每一杯，都是一段旅程。<br>致力于可持续与公平贸易咖啡。</p>
+      </div>
+      <div>
+        <h4 class="font-medium mb-4">快速链接</h4>
+        <ul class="space-y-2 text-stone-300 text-sm">
+          <li><a href="#products" class="hover:text-accent">产品列表</a></li>
+          <li><a href="#story" class="hover:text-accent">品牌故事</a></li>
+          <li><a href="javascript:void(0)" onclick="openAuth()">我的账户</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-medium mb-4">联系我们</h4>
+        <ul class="space-y-2 text-stone-300 text-sm">
+          <li>邮箱：hello@beanjourney.coffee</li>
+          <li>微信：BeanJourneyCoffee</li>
+          <li>地址：上海市静安区</li>
+        </ul>
+      </div>
+    </div>
+    <div class="border-t border-white/20 pt-8 text-center text-stone-400 text-sm">
+      <p>© 2026 Bean Journey Coffee. 保留所有权利。由 WorkBuddy Coffee-Wed-Skills 生成。</p>
+    </div>
+  </div>
+</footer>
+
+<!-- 购物车侧边栏 -->
+<div class="fixed inset-0 z-50 pointer-events-none" id="cart-overlay">
+  <div class="absolute inset-0 bg-black/40 opacity-0 transition-opacity pointer-events-none" id="cart-bg" onclick="toggleCart()"></div>
+  <div class="cart-drawer absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-2xl flex flex-col pointer-events-auto" id="cart-panel">
+    <div class="p-5 border-b flex items-center justify-between bg-brand text-white">
+      <h3 class="font-semibold text-lg">购物车</h3>
+      <button onclick="toggleCart()" class="p-1 hover:text-accent">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="flex-1 overflow-y-auto p-5" id="cart-items"></div>
+    <div class="p-5 border-t bg-stone-50" id="cart-footer"></div>
+  </div>
+</div>
+
+<!-- 登录/注册模态框 -->
+<div class="modal-overlay fixed inset-0 z-50 items-center justify-center bg-black/50" id="auth-modal">
+  <div class="bg-white rounded-2xl p-8 w-full max-w-sm mx-4 shadow-2xl">
+    <div class="flex justify-between items-center mb-6">
+      <div class="flex gap-4">
+        <button class="auth-tab font-semibold text-brand border-b-2 border-brand pb-1" data-tab="login" onclick="switchAuthTab('login')">登录</button>
+        <button class="auth-tab text-stone-400 pb-1" data-tab="register" onclick="switchAuthTab('register')">注册</button>
+      </div>
+      <button onclick="closeAuth()" class="text-stone-400 hover:text-stone-600">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="login-form" class="tab-content active space-y-4">
+      <div>
+        <label class="text-sm font-medium text-stone-600 block mb-1">用户名</label>
+        <input id="login-user" type="text" placeholder="请输入用户名" class="w-full border border-stone-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-brand">
+      </div>
+      <div>
+        <label class="text-sm font-medium text-stone-600 block mb-1">密码</label>
+        <input id="login-pass" type="password" placeholder="请输入密码" class="w-full border border-stone-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-brand">
+      </div>
+      <p id="login-msg" class="text-red-500 text-sm hidden"></p>
+      <button onclick="doLogin()" class="w-full bg-brand text-white py-3 rounded-lg font-medium hover:bg-brand-dark transition-colors">登录</button>
+      <p class="text-center text-sm text-stone-400">还没有账号？<button onclick="switchAuthTab('register')" class="text-brand font-medium">立即注册</button></p>
+    </div>
+    <div id="register-form" class="tab-content space-y-4">
+      <div>
+        <label class="text-sm font-medium text-stone-600 block mb-1">用户名</label>
+        <input id="reg-user" type="text" placeholder="请输入用户名" class="w-full border border-stone-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-brand">
+      </div>
+      <div>
+        <label class="text-sm font-medium text-stone-600 block mb-1">密码</label>
+        <input id="reg-pass" type="password" placeholder="至少6位密码" class="w-full border border-stone-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-brand">
+      </div>
+      <div>
+        <label class="text-sm font-medium text-stone-600 block mb-1">确认密码</label>
+        <input id="reg-pass2" type="password" placeholder="再次输入密码" class="w-full border border-stone-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-brand">
+      </div>
+      <p id="reg-msg" class="text-red-500 text-sm hidden"></p>
+      <button onclick="doRegister()" class="w-full bg-brand text-white py-3 rounded-lg font-medium hover:bg-brand-dark transition-colors">注册</button>
+    </div>
+  </div>
+</div>
+
+<!-- 支付模态框 -->
+<div class="modal-overlay fixed inset-0 z-50 items-center justify-center bg-black/50" id="pay-modal">
+  <div class="bg-white rounded-2xl p-8 w-full max-w-sm mx-4 shadow-2xl">
+    <div class="flex justify-between items-center mb-6">
+      <h3 class="font-semibold text-lg text-brand">选择支付方式</h3>
+      <button onclick="closePay()" class="text-stone-400 hover:text-stone-600">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="text-center mb-4">
+      <p class="text-stone-500 text-sm">应付金额</p>
+      <p class="text-3xl font-bold text-brand" id="pay-total">¥0</p>
+    </div>
+    <div class="flex gap-2 mb-6">
+      <button class="pay-tab flex-1 py-2 rounded-lg border-2 border-brand bg-brand text-white text-sm font-medium" data-tab="wechat" onclick="switchPayTab('wechat')">微信支付</button>
+      <button class="pay-tab flex-1 py-2 rounded-lg border border-stone-200 text-stone-500 text-sm" data-tab="alipay" onclick="switchPayTab('alipay')">支付宝</button>
+      <button class="pay-tab flex-1 py-2 rounded-lg border border-stone-200 text-stone-500 text-sm" data-tab="card" onclick="switchPayTab('card')">银行卡</button>
+    </div>
+    <div id="wechat-pay" class="tab-content active text-center">
+      <div class="w-40 h-40 bg-stone-100 rounded-xl mx-auto flex items-center justify-center mb-3 border-2 border-dashed border-stone-300">
+        <div>
+          <div class="text-4xl mb-1">📱</div>
+          <p class="text-xs text-stone-400">微信扫码支付</p>
+        </div>
+      </div>
+      <p class="text-xs text-stone-400">打开微信→扫一扫</p>
+    </div>
+    <div id="alipay-pay" class="tab-content text-center">
+      <div class="w-40 h-40 bg-blue-50 rounded-xl mx-auto flex items-center justify-center mb-3 border-2 border-dashed border-blue-200">
+        <div>
+          <div class="text-4xl mb-1">💳</div>
+          <p class="text-xs text-blue-400">支付宝扫码支付</p>
+        </div>
+      </div>
+      <p class="text-xs text-stone-400">打开支付宝→扫一扫</p>
+    </div>
+    <div id="card-pay" class="tab-content space-y-3">
+      <input type="text" placeholder="卡号（模拟：4242 4242 4242 4242）" class="w-full border border-stone-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-brand">
+      <div class="flex gap-3">
+        <input type="text" placeholder="MM/YY" class="flex-1 border border-stone-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-brand">
+        <input type="text" placeholder="CVV" class="w-20 border border-stone-200 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-brand">
+      </div>
+    </div>
+    <button onclick="confirmPay()" class="w-full bg-brand text-white py-3 rounded-lg font-medium hover:bg-brand-dark transition-colors mt-6">确认支付</button>
+  </div>
+</div>
+
+<!-- 订单成功覆盖层 -->
+<div class="modal-overlay fixed inset-0 z-50 items-center justify-center bg-black/50" id="success-modal">
+  <div class="bg-white rounded-2xl p-10 w-full max-w-sm mx-4 shadow-2xl text-center">
+    <div class="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+      <svg class="w-10 h-10 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+    </div>
+    <h3 class="font-serif text-2xl font-bold text-brand mb-2">支付成功！</h3>
+    <p class="text-stone-500 mb-4">感谢您的购买，您的咖啡正在备货中</p>
+    <div class="bg-stone-50 rounded-lg p-4 mb-6">
+      <p class="text-xs text-stone-400 mb-1">订单号</p>
+      <p class="font-mono font-bold text-brand text-lg" id="order-number"></p>
+    </div>
+    <p class="text-sm text-stone-400 mb-6">预计 3-5 个工作日送达</p>
+    <button onclick="closeSuccess()" class="w-full bg-brand text-white py-3 rounded-lg font-medium hover:bg-brand-dark transition-colors">继续购物</button>
+  </div>
+</div>
+
+<script>
+const PRODUCTS = [
+  { id: 1, name: '埃塞俄比亚 耶加雪菲', price: 128, category: '单品豆', desc: '花香茉莉、柑橘酸质，明亮清爽的水洗豆', img: 'https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=400&q=80' },
+  { id: 2, name: '哥伦比亚 慧兰', price: 118, category: '单品豆', desc: '焦糖甜感、红苹果果酸，醇厚平衡', img: 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&q=80' },
+  { id: 3, name: '云南 普洱咖啡豆', price: 88, category: '国产精品', desc: '黑糖蜜香、坚果余韵，中国本土精品', img: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=400&q=80' },
+  { id: 4, name: '意式浓缩拼配', price: 98, category: '拼配豆', desc: '深烘、黑巧克力、烟草余韵，espresso 专用', img: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=400&q=80' },
+  { id: 5, name: '挂耳礼盒（10片装）', price: 68, category: '即饮系列', desc: '精选三款风味，随时随地享受好咖啡', img: 'https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?w=400&q=80' },
+  { id: 6, name: '冷萃浓缩液（6瓶）', price: 158, category: '即饮系列', desc: '低温萃取18小时，顺滑无苦涩，1:4兑水即饮', img: 'https://images.unsplash.com/photo-1461023058943-07fcbe16d735?w=400&q=80' }
+];
+
+let cart = [];
+let cartOpen = false;
+
+function saveCart() { try { localStorage.setItem('cwb_cart', JSON.stringify(cart)); } catch(e) {} }
+function loadCart() { try { const d = localStorage.getItem('cwb_cart'); if(d) cart = JSON.parse(d); } catch(e) {} }
+function getUsers() { try { return JSON.parse(localStorage.getItem('cwb_users') || '[]'); } catch(e) { return []; } }
+function saveUsers(u) { try { localStorage.setItem('cwb_users', JSON.stringify(u)); } catch(e) {} }
+function getCurrentUser() { try { return localStorage.getItem('cwb_current_user'); } catch(e) { return null; } }
+function setCurrentUser(u) { try { if(u) localStorage.setItem('cwb_current_user', u); else localStorage.removeItem('cwb_current_user'); } catch(e) {} }
+
+function updateBadge() {
+  const total = cart.reduce((s, i) => s + i.qty, 0);
+  const badge = document.getElementById('cart-badge');
+  badge.textContent = total;
+  badge.classList.toggle('hidden', total === 0);
+}
+
+function addToCart(id) {
+  const p = PRODUCTS.find(x => x.id === id);
+  const item = cart.find(x => x.id === id);
+  if (item) { item.qty++; } else { cart.push({ id: p.id, name: p.name, price: p.price, qty: 1 }); }
+  saveCart(); updateBadge(); renderCart();
+  const btn = document.getElementById('btn-' + id);
+  if (btn) { btn.textContent = '已加入'; btn.classList.add('bg-accent-dark'); setTimeout(() => { btn.textContent = '加入购物车'; btn.classList.remove('bg-accent-dark'); }, 1000); }
+}
+
+function updateQty(id, d) {
+  const item = cart.find(x => x.id === id);
+  if (!item) return;
+  item.qty += d;
+  if (item.qty <= 0) cart = cart.filter(x => x.id !== id);
+  saveCart(); updateBadge(); renderCart();
+}
+
+function renderCart() {
+  const el = document.getElementById('cart-items');
+  const footer = document.getElementById('cart-footer');
+  if (cart.length === 0) {
+    el.innerHTML = '<div class="text-center py-16 text-stone-400"><div class="text-5xl mb-4">☕</div><p>购物车是空的</p><p class="text-sm mt-2">去选几款咖啡吧</p></div>';
+    footer.innerHTML = '';
+    return;
+  }
+  el.innerHTML = cart.map(i => `
+    <div class="flex items-center gap-3 py-4 border-b">
+      <div class="flex-1">
+        <p class="font-medium text-sm">${i.name}</p>
+        <p class="text-brand font-bold">¥${i.price}</p>
+      </div>
+      <div class="flex items-center gap-2 border rounded-lg overflow-hidden">
+        <button onclick="updateQty(${i.id},-1)" class="px-2.5 py-1.5 hover:bg-stone-100 text-stone-600">−</button>
+        <span class="px-2 text-sm font-medium">${i.qty}</span>
+        <button onclick="updateQty(${i.id},1)" class="px-2.5 py-1.5 hover:bg-stone-100 text-stone-600">+</button>
+      </div>
+    </div>`).join('');
+  const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  footer.innerHTML = `
+    <div class="flex justify-between font-semibold mb-4"><span>合计</span><span class="text-brand text-xl">¥${total}</span></div>
+    <button onclick="startPay()" class="w-full bg-brand text-white py-3 rounded-lg font-medium hover:bg-brand-dark transition-colors">去结算</button>`;
+}
+
+function toggleCart() {
+  cartOpen = !cartOpen;
+  const panel = document.getElementById('cart-panel');
+  const bg = document.getElementById('cart-bg');
+  const overlay = document.getElementById('cart-overlay');
+  panel.classList.toggle('open', cartOpen);
+  bg.style.opacity = cartOpen ? '1' : '0';
+  bg.style.pointerEvents = cartOpen ? 'auto' : 'none';
+  overlay.style.pointerEvents = cartOpen ? 'auto' : 'none';
+  if (cartOpen) renderCart();
+}
+
+function renderProducts() {
+  const grid = document.getElementById('product-grid');
+  grid.innerHTML = PRODUCTS.map(p => `
+    <div class="product-card bg-white rounded-2xl overflow-hidden shadow-sm border border-stone-100 cursor-pointer">
+      <div class="h-52 overflow-hidden bg-stone-100">
+        <img src="${p.img}" alt="${p.name}" class="w-full h-full object-cover">
+      </div>
+      <div class="p-5">
+        <span class="text-xs text-accent font-medium bg-accent/10 px-2 py-0.5 rounded-full">${p.category}</span>
+        <h3 class="font-semibold mt-2 mb-1">${p.name}</h3>
+        <p class="text-stone-400 text-sm leading-relaxed mb-4">${p.desc}</p>
+        <div class="flex items-center justify-between">
+          <span class="text-brand text-xl font-bold">¥${p.price}</span>
+          <button id="btn-${p.id}" onclick="addToCart(${p.id})" class="bg-accent text-brand px-4 py-2 rounded-lg text-sm font-medium hover:bg-accent-dark transition-colors">加入购物车</button>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function updateAuthUI() {
+  const user = getCurrentUser();
+  const area = document.getElementById('auth-area');
+  if (user) {
+    area.innerHTML = `<div class="flex items-center gap-2"><span class="text-accent text-sm">Hi, ${user}</span><button onclick="doLogout()" class="text-white/60 text-xs hover:text-white">退出</button></div>`;
+  } else {
+    area.innerHTML = `<button onclick="openAuth()" class="bg-accent text-brand px-4 py-1.5 rounded-full text-sm font-medium hover:bg-accent-dark transition-colors">登录</button>`;
+  }
+}
+
+function openAuth() { document.getElementById('auth-modal').classList.add('open'); }
+function closeAuth() { document.getElementById('auth-modal').classList.remove('open'); }
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-tab').forEach(t => { t.classList.toggle('font-semibold', t.dataset.tab === tab); t.classList.toggle('text-brand', t.dataset.tab === tab); t.classList.toggle('border-b-2', t.dataset.tab === tab); t.classList.toggle('border-brand', t.dataset.tab === tab); t.classList.toggle('text-stone-400', t.dataset.tab !== tab); });
+  document.querySelectorAll('#auth-modal .tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById(tab + '-form').classList.add('active');
+}
+
+function doLogin() {
+  const user = document.getElementById('login-user').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const msg = document.getElementById('login-msg');
+  if (!user || !pass) { msg.textContent = '请填写用户名和密码'; msg.classList.remove('hidden'); return; }
+  const users = getUsers();
+  const found = users.find(u => u.name === user && u.pass === btoa(pass));
+  if (!found) { msg.textContent = '用户名或密码错误'; msg.classList.remove('hidden'); return; }
+  setCurrentUser(user); closeAuth(); updateAuthUI();
+}
+
+function doRegister() {
+  const user = document.getElementById('reg-user').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  const pass2 = document.getElementById('reg-pass2').value;
+  const msg = document.getElementById('reg-msg');
+  if (!user || !pass) { msg.textContent = '请填写完整信息'; msg.classList.remove('hidden'); return; }
+  if (pass.length < 6) { msg.textContent = '密码至少6位'; msg.classList.remove('hidden'); return; }
+  if (pass !== pass2) { msg.textContent = '两次密码不一致'; msg.classList.remove('hidden'); return; }
+  const users = getUsers();
+  if (users.find(u => u.name === user)) { msg.textContent = '用户名已存在'; msg.classList.remove('hidden'); return; }
+  users.push({ name: user, pass: btoa(pass) });
+  saveUsers(users); setCurrentUser(user); closeAuth(); updateAuthUI();
+}
+
+function doLogout() { setCurrentUser(null); updateAuthUI(); }
+
+function startPay() {
+  const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  document.getElementById('pay-total').textContent = '¥' + total;
+  document.getElementById('pay-modal').classList.add('open');
+  toggleCart();
+}
+function closePay() { document.getElementById('pay-modal').classList.remove('open'); }
+function switchPayTab(tab) {
+  document.querySelectorAll('.pay-tab').forEach(t => { const active = t.dataset.tab === tab; t.classList.toggle('border-brand', active); t.classList.toggle('bg-brand', active); t.classList.toggle('text-white', active); t.classList.toggle('border-stone-200', !active); t.classList.toggle('text-stone-500', !active); t.classList.remove('bg-white'); if (!active) t.classList.add('bg-white'); });
+  document.querySelectorAll('#pay-modal .tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById(tab + '-pay').classList.add('active');
+}
+function confirmPay() {
+  const orderId = 'BJ' + Date.now().toString().slice(-8);
+  document.getElementById('order-number').textContent = orderId;
+  closePay(); cart = []; saveCart(); updateBadge();
+  document.getElementById('success-modal').classList.add('open');
+}
+function closeSuccess() { document.getElementById('success-modal').classList.remove('open'); }
+
+loadCart(); updateBadge(); renderProducts(); updateAuthUI();
+</script>
+</body>
+</html>
